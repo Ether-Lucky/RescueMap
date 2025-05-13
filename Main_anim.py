@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import networkx as nx
+import random
 
 # Create graph
 G = nx.Graph()
@@ -20,7 +21,7 @@ edges = [("acc", "acc2", 3), ("acc2", "pol", 2), ("acc2", "pol2", 3), ("acc2", "
          ("pol8", "polhos5", 3), ("polhos5", "hos8", 2), ("polhos5", "pol10", 2), ("hos9", "hos10", 2), ("hos10", "acc5", 2), 
          ("acc5", "hos12", 2), ("hos12", "pol11", 2), ("pol11", "acc6", 2), ("hos11", "hos10", 3), ("hos11", "hosacc", 3),
          ("pol9", "hos7", 2), ("pol9", "polhos5", 3), ("hos9", "polhos5", 3), ("polhos", "polhos2", 3), ("polhos", "pol3", 2), 
-         ("polhos2", "pol3", 2) ] 
+         ("polhos2", "pol3", 2)] 
 
 # Add nodes and weighted edges
 G.add_nodes_from(nodes)
@@ -28,6 +29,13 @@ G.add_weighted_edges_from(edges)
 
 # Graph layout
 pos = nx.spring_layout(G, seed=42)
+
+# Traffic simulation function
+def simulate_traffic():
+    for u, v, data in G.edges(data=True):
+        if random.random() < 0.3:  # 30% chance of traffic on each edge
+            traffic_increase = random.randint(1, 5)  # Traffic congestion increases weight by 1-5
+            data['weight'] += traffic_increase
 
 # Generalized path finder (hospital or police)
 def find_nearest_target(start_node, prefix):
@@ -85,6 +93,9 @@ def animate_path(path, start_node, end_node, dist, label, color):
 
 # Process all accident nodes
 accident_nodes = [node for node in G.nodes if node.startswith("acc")]
+
+# Simulate traffic and process paths
+simulate_traffic()
 
 for acc in accident_nodes:
     # Hospital path
