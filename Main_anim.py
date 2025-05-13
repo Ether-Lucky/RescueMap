@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import networkx as nx
-import random
 
 # Create graph
 G = nx.Graph()
@@ -21,21 +20,11 @@ edges = [("acc", "acc2", 3), ("acc2", "pol", 2), ("acc2", "pol2", 3), ("acc2", "
          ("pol8", "polhos5", 3), ("polhos5", "hos8", 2), ("polhos5", "pol10", 2), ("hos9", "hos10", 2), ("hos10", "acc5", 2), 
          ("acc5", "hos12", 2), ("hos12", "pol11", 2), ("pol11", "acc6", 2), ("hos11", "hos10", 3), ("hos11", "hosacc", 3),
          ("pol9", "hos7", 2), ("pol9", "polhos5", 3), ("hos9", "polhos5", 3), ("polhos", "polhos2", 3), ("polhos", "pol3", 2), 
-         ("polhos2", "pol3", 2)] 
+         ("polhos2", "pol3", 2) ] 
 
 # Add nodes and weighted edges
 G.add_nodes_from(nodes)
 G.add_weighted_edges_from(edges)
-
-# Random traffic congestion: increase weights on some edges
-for u, v, w in list(G.edges(data='weight')):
-    if random.random() < 0.3:  # 30% chance of congestion
-        extra = random.randint(1, 5)
-        G[u][v]['weight'] += extra
-        print(f"Traffic: Increased weight of edge ({u}, {v}) by {extra}")
-
-# Update edge labels to reflect new weights
-updated_edge_labels = {(u, v): G[u][v]['weight'] for u, v in G.edges()}
 
 # Graph layout
 pos = nx.spring_layout(G, seed=42)
@@ -79,24 +68,16 @@ def animate_path(path, start_node, end_node, dist, label, color):
     nx.draw_networkx_nodes(G, pos, node_color=color_map, node_size=1000, ax=ax)
     nx.draw_networkx_labels(G, pos, font_weight='bold', ax=ax)
     nx.draw_networkx_edges(G, pos, edgelist=G.edges, edge_color='gray', alpha=0.3, ax=ax)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=updated_edge_labels, ax=ax)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): w for u, v, w in edges}, ax=ax)
 
-    # Prepare path edges and moving dot coordinates
+    # Prepare path edges
     path_edges = list(zip(path, path[1:]))
     animated_edges = []
-    dot, = ax.plot([], [], 'o', color=color, markersize=12)
 
     def update(num):
         if num < len(path_edges):
-            edge = path_edges[num]
-            animated_edges.append(edge)
+            animated_edges.append(path_edges[num])
             nx.draw_networkx_edges(G, pos, edgelist=animated_edges, edge_color=color, width=3, ax=ax)
-            # Move dot along the edge
-            x1, y1 = pos[edge[0]]
-            x2, y2 = pos[edge[1]]
-            x = x1 + (x2 - x1) * 0.5
-            y = y1 + (y2 - y1) * 0.5
-            dot.set_data(x, y)
 
     ani = animation.FuncAnimation(fig, update, frames=len(path_edges)+1, interval=700, repeat=False)
     plt.title(f"{label}: {start_node} ➝ {end_node} (Distance: {dist})")
