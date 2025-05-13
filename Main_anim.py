@@ -27,15 +27,18 @@ edges = [("acc", "acc2", 3), ("acc2", "pol", 2), ("acc2", "pol2", 3), ("acc2", "
 G.add_nodes_from(nodes)
 G.add_weighted_edges_from(edges)
 
+# Random traffic congestion: increase weights on some edges
+for u, v, w in list(G.edges(data='weight')):
+    if random.random() < 0.3:  # 30% chance of congestion
+        extra = random.randint(1, 5)
+        G[u][v]['weight'] += extra
+        print(f"Traffic: Increased weight of edge ({u}, {v}) by {extra}")
+
+# Update edge labels to reflect new weights
+updated_edge_labels = {(u, v): G[u][v]['weight'] for u, v in G.edges()}
+
 # Graph layout
 pos = nx.spring_layout(G, seed=42)
-
-# Traffic simulation function
-def simulate_traffic():
-    for u, v, data in G.edges(data=True):
-        if random.random() < 0.3:  # 30% chance of traffic on each edge
-            traffic_increase = random.randint(1, 5)  # Traffic congestion increases weight by 1-5
-            data['weight'] += traffic_increase
 
 # Generalized path finder (hospital or police)
 def find_nearest_target(start_node, prefix):
@@ -76,16 +79,24 @@ def animate_path(path, start_node, end_node, dist, label, color):
     nx.draw_networkx_nodes(G, pos, node_color=color_map, node_size=1000, ax=ax)
     nx.draw_networkx_labels(G, pos, font_weight='bold', ax=ax)
     nx.draw_networkx_edges(G, pos, edgelist=G.edges, edge_color='gray', alpha=0.3, ax=ax)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): w for u, v, w in edges}, ax=ax)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=updated_edge_labels, ax=ax)
 
-    # Prepare path edges
+    # Prepare path edges and moving dot coordinates
     path_edges = list(zip(path, path[1:]))
     animated_edges = []
+    dot, = ax.plot([], [], 'o', color=color, markersize=12)
 
     def update(num):
         if num < len(path_edges):
-            animated_edges.append(path_edges[num])
+            edge = path_edges[num]
+            animated_edges.append(edge)
             nx.draw_networkx_edges(G, pos, edgelist=animated_edges, edge_color=color, width=3, ax=ax)
+            # Move dot along the edge
+            x1, y1 = pos[edge[0]]
+            x2, y2 = pos[edge[1]]
+            x = x1 + (x2 - x1) * 0.5
+            y = y1 + (y2 - y1) * 0.5
+            dot.set_data(x, y)
 
     ani = animation.FuncAnimation(fig, update, frames=len(path_edges)+1, interval=700, repeat=False)
     plt.title(f"{label}: {start_node} ➝ {end_node} (Distance: {dist})")
@@ -93,9 +104,6 @@ def animate_path(path, start_node, end_node, dist, label, color):
 
 # Process all accident nodes
 accident_nodes = [node for node in G.nodes if node.startswith("acc")]
-
-# Simulate traffic and process paths
-simulate_traffic()
 
 for acc in accident_nodes:
     # Hospital path
