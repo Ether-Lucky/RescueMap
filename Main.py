@@ -61,3 +61,49 @@ nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
 
 plt.show()
     
+
+
+# def simulate_phone_gui():
+#     def add_digit(digit):
+#         current = phone_var.get()
+#         phone_var.set(current + digit)
+
+#     def clear_number():
+#         phone_var.set("")
+
+#     def handle_call():
+#         number = phone_var.get()
+#         if number == "911":
+#             root.withdraw()
+#             show_options_window()
+#         else:
+#             messagebox.showerror("Invalid", "Please dial 911 to proceed.")
+
+#     root = tk.Tk()
+#     root.title("Emergency Dialer")
+
+#     phone_var = tk.StringVar()
+#     display = ttk.Label(root, textvariable=phone_var, font=("Arial", 24), background="white", anchor="center")
+#     display.pack(padx=10, pady=10, fill='x')
+
+#     btn_frame = ttk.Frame(root)
+#     btn_frame.pack()
+
+#     # Create number buttons (1-9)
+#     for i in range(1, 10):
+#         btn = ttk.Button(btn_frame, text=str(i), command=lambda d=str(i): add_digit(d), width=5)
+#         btn.grid(row=(i - 1) // 3, column=(i - 1) % 3, padx=5, pady=5)
+
+#     # Row for Clear, 0, and Call buttons
+#     ttk.Button(btn_frame, text="Clear", command=clear_number, width=5).grid(row=3, column=0, padx=5, pady=5)
+#     ttk.Button(btn_frame, text="0", command=lambda: add_digit("0"), width=5).grid(row=3, column=1, padx=5, pady=5)
+#     ttk.Button(btn_frame, text="Call", command=handle_call, width=5).grid(row=3, column=2, padx=5, pady=5)
+
+#     root.mainloop()
+
+# # Zoom in the accident node
+# if start_node in pos:
+#         x, y = pos[start_node]
+#         zoom_range = 0.2  # You can adjust this value to zoom more or less
+#         ax.set_xlim(x - zoom_range, x + zoom_range)
+#         ax.set_ylim(y - zoom_range, y + zoom_range)

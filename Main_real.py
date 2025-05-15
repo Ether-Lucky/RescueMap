@@ -4,6 +4,7 @@ import networkx as nx
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from matplotlib.patches import Wedge, Circle
 
 # Create graph
 G = nx.Graph()
@@ -25,14 +26,18 @@ edges = [("acc", "acc2", 3), ("acc2", "pol", 2), ("acc2", "pol2", 3), ("acc2", "
          ("pol9", "hos7", 2), ("pol9", "polhos5", 3), ("hos9", "polhos5", 3), ("polhos", "polhos2", 3), ("polhos", "pol3", 2),
          ("polhos2", "pol3", 2)]
 
-# Build graph
+# Add nodes and weighted edges
 G.add_nodes_from(nodes)
 G.add_weighted_edges_from(edges)
-pos = nx.spring_layout(G, seed=42)
+
+# Graph layout
+pos = nx.spring_layout(G, seed=42, k=0.7, iterations=100)
+
 
 def find_nearest_target(start_node, prefix):
     target_nodes = [n for n in G.nodes if n.startswith(prefix)]
     paths = {}
+
     for target in target_nodes:
         try:
             path = nx.shortest_path(G, source=start_node, target=target, weight='weight')
@@ -40,28 +45,51 @@ def find_nearest_target(start_node, prefix):
             paths[target] = (length, path)
         except nx.NetworkXNoPath:
             continue
+
     if paths:
         nearest = min(paths, key=lambda k: paths[k][0])
         return nearest, paths[nearest][0], paths[nearest][1]
     else:
         return None, None, None
 
+def draw_custom_nodes(ax, pos, G):
+    radius = 0.03  # consistent radius for all nodes
+
+    for node in G.nodes:
+        x, y = pos[node]
+        if node == "hosacc":
+            wedge1 = Wedge((x, y), radius, 0, 180, facecolor='red', edgecolor='black')
+            wedge2 = Wedge((x, y), radius, 180, 360, facecolor='green', edgecolor='black')
+            ax.add_patch(wedge1)
+            ax.add_patch(wedge2)
+        elif node.startswith("polhos"):
+            wedge1 = Wedge((x, y), radius, 0, 180, facecolor='blue', edgecolor='black')
+            wedge2 = Wedge((x, y), radius, 180, 360, facecolor='green', edgecolor='black')
+            ax.add_patch(wedge1)
+            ax.add_patch(wedge2)
+        else:
+            if node.startswith("acc"):
+                color = 'red'
+            elif node.startswith("hos"):
+                color = 'green'
+            elif node.startswith("pol"):
+                color = 'blue'
+            else:
+                color = 'gray'
+            circle = Circle((x, y), radius, facecolor=color, edgecolor='black')
+            ax.add_patch(circle)
+
 def animate_path(path, start_node, end_node, dist, label, color):
     fig, ax = plt.subplots(figsize=(10, 8))
-    color_map = []
-    for node in G.nodes:
-        if node.startswith('acc'):
-            color_map.append('red')
-        elif node.startswith('hos'):
-            color_map.append('green')
-        elif node.startswith('pol'):
-            color_map.append('blue')
-        else:
-            color_map.append('gray')
-    nx.draw_networkx_nodes(G, pos, node_color=color_map, node_size=1000, ax=ax)
-    nx.draw_networkx_labels(G, pos, font_weight='bold', ax=ax)
+
+    # Draw all edges faintly
     nx.draw_networkx_edges(G, pos, edgelist=G.edges, edge_color='gray', alpha=0.3, ax=ax)
+    # Draw edge labels
     nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): w for u, v, w in edges}, ax=ax)
+    # Draw custom nodes with consistent sizes and colors
+    draw_custom_nodes(ax, pos, G)
+    # Draw node labels
+    nx.draw_networkx_labels(G, pos, font_weight='bold', ax=ax)
 
     path_edges = list(zip(path, path[1:]))
     animated_edges = []
@@ -73,22 +101,34 @@ def animate_path(path, start_node, end_node, dist, label, color):
 
     ani = animation.FuncAnimation(fig, update, frames=len(path_edges)+1, interval=700, repeat=False)
     plt.title(f"{label}: {start_node} ➔ {end_node} (Distance: {dist})")
+
+    # Zoom in the accident node
+    if start_node in pos and end_node in pos:
+        x1, y1 = pos[start_node]
+        x2, y2 = pos[end_node]
+        mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
+        zoom_range = 0.4  # Adjust zoom level here
+        ax.set_xlim(mid_x - zoom_range, mid_x + zoom_range)
+        ax.set_ylim(mid_y - zoom_range, mid_y + zoom_range)
+
     plt.show()
 
-# List of accident nodes
-accident_nodes = [n for n in G.nodes if n.startswith("acc")]
+# Tkinter GUI
+accident_nodes = [node for node in G.nodes if node.startswith("acc")] + ["hosacc"]
 
 def show_options_window():
     def process_selection():
         selected_acc = acc_var.get()
         severity = severity_var.get()
+
         if not selected_acc:
             messagebox.showerror("Error", "Please select an accident node.")
             return
+
         if severity == "major":
             hos_name, hos_dist, hos_path = find_nearest_target(selected_acc, "hos")
             if hos_path:
-                animate_path(hos_path, selected_acc, hos_name, hos_dist, "To Hospital", "red")
+                animate_path(hos_path, selected_acc, hos_name, hos_dist, "To Hospital", "green")
         elif severity == "minor":
             pol_name, pol_dist, pol_path = find_nearest_target(selected_acc, "pol")
             if pol_path:
@@ -96,6 +136,7 @@ def show_options_window():
 
     option_win = tk.Toplevel()
     option_win.title("Select Accident Info")
+
     ttk.Label(option_win, text="Select Accident Node:").pack(pady=5)
     acc_var = tk.StringVar()
     acc_dropdown = ttk.Combobox(option_win, textvariable=acc_var, values=accident_nodes)
@@ -104,6 +145,7 @@ def show_options_window():
     severity_var = tk.StringVar()
     ttk.Radiobutton(option_win, text="Major", variable=severity_var, value="major").pack()
     ttk.Radiobutton(option_win, text="Minor", variable=severity_var, value="minor").pack()
+
     ttk.Button(option_win, text="Submit", command=process_selection).pack(pady=10)
 
 def simulate_phone_gui():
@@ -143,6 +185,5 @@ def simulate_phone_gui():
     ttk.Button(btn_frame, text="Call", command=handle_call, width=5).grid(row=3, column=2, padx=5, pady=5)
 
     root.mainloop()
-
 
 simulate_phone_gui()
