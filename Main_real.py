@@ -14,7 +14,7 @@ nodes = ["pol", "pol2", "pol3", "pol4", "pol5", "pol12", "pol6", "pol7", "pol8",
          "hos", "hos2", "hos3", "hos4", "hos5", "hos6", "hos7", "hos8", "hos9", "hos10", "hos11", "hos12",
          "acc", "acc2", "acc3", "acc4", "acc5", "acc6", "polhos", "polhos2", "polhos3", "polhos4", "polhos5", "hosacc"]
 
-# Define edges with weights
+# Define edges with weights ( Node 1 | Node 2 | Connection Weight )
 edges = [("acc", "acc2", 3), ("acc2", "pol", 2), ("acc2", "pol2", 3), ("acc2", "hos", 2), ("pol2", "pol3", 3),
          ("pol2", "polhos", 2), ("pol2", "polhos2", 3), ("pol3", "polhos3", 2), ("polhos3", "hos3", 2), ("polhos", "pol4", 2),
          ("hos", "hos2", 2), ("hos2", "pol8", 2), ("polhos2", "pol5", 2), ("polhos2", "hos5", 2), ("polhos2", "hos4", 3),
@@ -30,7 +30,7 @@ edges = [("acc", "acc2", 3), ("acc2", "pol", 2), ("acc2", "pol2", 3), ("acc2", "
 G.add_nodes_from(nodes)
 G.add_weighted_edges_from(edges)
 
-# Graph layout
+# Graph layout ( consistency | spread of nodes | stability )
 pos = nx.spring_layout(G, seed=42, k=0.7, iterations=100)
 
 
