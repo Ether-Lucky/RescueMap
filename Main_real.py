@@ -125,6 +125,10 @@ def show_options_window():
             messagebox.showerror("Error", "Please select an accident node.")
             return
 
+        if not severity:
+            messagebox.showerror("Error", "Please select a severity level (Major or Minor).")
+            return
+
         if severity == "major":
             hos_name, hos_dist, hos_path = find_nearest_target(selected_acc, "hos")
             if hos_path:
@@ -133,6 +137,7 @@ def show_options_window():
             pol_name, pol_dist, pol_path = find_nearest_target(selected_acc, "pol")
             if pol_path:
                 animate_path(pol_path, selected_acc, pol_name, pol_dist, "To Police", "blue")
+
 
     option_win = tk.Toplevel()
     option_win.title("Select Accident Info")
